@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Ticket {{ ticket.ticket_id }} - SupportDesk{% endblock %}
+{% block page_heading %}Ticket Details: {{ ticket.ticket_id }}{% endblock %}
+
+{% block topbar_actions %}
+<div style="display: flex; gap: 0.5rem;">
+  <a href="{% url 'tickets:ticket_list' %}" class="btn btn-secondary btn-sm">
+    &larr; Back to Tickets
+  </a>
+  <a href="{% url 'tickets:ticket_update' ticket.ticket_id %}" class="btn btn-primary btn-sm">
+    ✏️ Edit Ticket
+  </a>
+  {% if role == 'admin' or role == 'customer' and ticket.customer == user and ticket.status == 'Open' %}
+  <a href="{% url 'tickets:ticket_delete' ticket.ticket_id %}" class="btn btn-danger btn-sm">
+    🗑️ Delete
+  </a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+  <!-- Left Column: Main Ticket Information & Actions -->
+  <div>
+    <div class="card">
+      <div class="card-body">
+        <div class="ticket-header">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+              <span class="ticket-code" style="font-size: 1.1rem; cursor: pointer;" data-copy-text="{{ ticket.ticket_id }}" title="Click to copy ticket ID">
+                {{ ticket.ticket_id }} 📋
+              </span>
+              <span class="badge badge-status-{{ ticket.status|slugify }}" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+                {{ ticket.status }}
+              </span>
+              <span class="badge badge-priority-{{ ticket.priority|lower }}" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+                {{ ticket.priority }} Priority
+              </span>
+              <span class="badge badge-category" style="font-size: 0.85rem; padding: 0.35rem 0.85rem;">
+                {{ ticket.category }}
+              </span>
+            </div>
+            <h2 class="ticket-header-title">{{ ticket.title }}</h2>
+          </div>
+        </div>
+
+        <div class="form-label" style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Issue Description</div>
+        <div class="ticket-description-box">{{ ticket.description }}</div>
+
+        <!-- Resolution Notes Section -->
+        {% if ticket.resolution_notes %}
+        <div class="resolution-box">
+          <div class="resolution-header">
+            <span>✅ Resolution Notes</span>
+          </div>
+          <div style="font-size: 0.925rem; color: #064e3b; white-space: pre-wrap;">
+            {{ ticket.resolution_notes }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Agent & Admin Triage Operations Panel -->
+    {% if role in 'agent,admin' %}
+    <div class="card">
+      <div class="card-header" style="background-color: #f8fafc;">
+        <h3 class="card-title">⚡ Support Agent Action Panel</h3>
+        <span class="badge badge-category">Authorized Personnel</span>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'tickets:ticket_detail' ticket.ticket_id %}" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          {% csrf_token %}
+
+          <div class="form-row">
+            <!-- Update Status -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Update Ticket Status</label>
+              <select name="status" class="form-control">
+                {% for val, label in status_choices %}
+                  <option value="{{ val }}" {% if ticket.status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Reassign Agent -->
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Assign Agent</label>
+              <select name="assigned_to" class="form-control">
+                <option value="">-- Unassigned --</option>
+                {% for agent in agents %}
+                  <option value="{{ agent.id }}" {% if ticket.assigned_to == agent %}selected{% endif %}>
+                    {{ agent.get_full_name|default:agent.username }} ({{ agent.username }})
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Resolution Notes Input -->
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Resolution Findings / Notes</label>
+            <textarea name="resolution_notes" class="form-control" rows="3" placeholder="Enter findings, root cause, or resolution details for the customer...">{{ ticket.resolution_notes }}</textarea>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <input type="hidden" name="action" value="add_resolution">
+            <button type="submit" class="btn btn-primary">
+              💾 Save Resolution & Status
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right Column: Metadata & History Sidebar -->
+  <div>
+    <div class="meta-sidebar-card">
+      <h3 style="font-size: 1.05rem; font-weight: 800; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+        Ticket Properties
+      </h3>
+
+      <div class="meta-item">
+        <span class="meta-label">Submitted By</span>
+        <span class="meta-value">{{ ticket.customer.get_full_name|default:ticket.customer.username }}</span>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">{{ ticket.customer.email }}</span>
+      </div>
+
+      <div class="meta-item">
+        <span class="meta-label">Assigned Agent</span>
+        <span class="meta-value">
+          {% if ticket.assigned_to %}
+            {{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}
+          {% else %}
+            <span style="color: var(--text-light); font-style: italic;">Unassigned</span>
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="meta-item">
+        <span class="meta-label">Date Created</span>
+        <span class="meta-value">{{ ticket.created_at|date:"M d, Y H:i" }}</span>
+      </div>
+
+      <div class="meta-item">
+        <span class="meta-label">Last Modified</span>
+        <span class="meta-value">{{ ticket.updated_at|date:"M d, Y H:i" }}</span>
+      </div>
+
+      <div class="meta-item" style="border-top: 1px solid var(--border-light); padding-top: 1rem;">
+        <span class="meta-label">SLA Status</span>
+        <span class="meta-value" style="font-size: 0.85rem; color: {% if ticket.status == 'Resolved' or ticket.status == 'Closed' %}#059669{% else %}#d97706{% endif %}; font-weight: 700;">
+          {% if ticket.status == 'Resolved' or ticket.status == 'Closed' %}
+            SLA Met (Resolved)
+          {% else %}
+            Active SLA Clock
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

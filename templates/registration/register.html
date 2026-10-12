@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - SupportDesk</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card" style="max-width: 520px;">
+      <div class="auth-brand">
+        <div class="brand-logo">
+          <div class="brand-icon">SD</div>
+          <span>SupportDesk</span>
+        </div>
+      </div>
+
+      <h2 class="auth-title">Create Your Account</h2>
+      <p class="auth-subtitle">Get started with automated customer support workflows</p>
+
+      {% if messages %}
+      <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+          <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'tickets:register' %}">
+        {% csrf_token %}
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}<div class="form-error">{{ form.last_name.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.username.id_for_label }}" class="form-label">Username *</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div class="form-error">{{ form.username.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.email.id_for_label }}" class="form-label">Email Address *</label>
+          {{ form.email }}
+          {% if form.email.errors %}<div class="form-error">{{ form.email.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.role.id_for_label }}" class="form-label">Account Role *</label>
+          {{ form.role }}
+          <div class="form-help">Select Support Agent to manage tickets, or Customer to raise issues.</div>
+          {% if form.role.errors %}<div class="form-error">{{ form.role.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="{{ form.password.id_for_label }}" class="form-label">Password *</label>
+            {{ form.password }}
+            {% if form.password.errors %}<div class="form-error">{{ form.password.errors.0 }}</div>{% endif %}
+          </div>
+          <div class="form-group">
+            <label for="{{ form.confirm_password.id_for_label }}" class="form-label">Confirm Password *</label>
+            {{ form.confirm_password }}
+            {% if form.confirm_password.errors %}<div class="form-error">{{ form.confirm_password.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+          Complete Registration
+        </button>
+      </form>
+
+      <div style="margin-top: 1.75rem; text-align: center; font-size: 0.875rem; color: var(--text-muted);">
+        Already have an account? 
+        <a href="{% url 'login' %}" style="font-weight: 700;">Sign in here</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SupportDesk - Customer Support Management{% endblock %}</title>
+  <meta name="description" content="Enterprise grade support ticket management system built with Python, Django, and MySQL.">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <a href="{% url 'tickets:dashboard' %}" class="brand-logo">
+          <div class="brand-icon">SD</div>
+          <span>SupportDesk</span>
+          <span class="brand-badge">SaaS</span>
+        </a>
+      </div>
+
+      <nav class="sidebar-menu">
+        <div class="menu-label">Workspace</div>
+        <a href="{% url 'tickets:dashboard' %}" class="menu-item {% if active_tab == 'dashboard' %}active{% endif %}">
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="{% url 'tickets:ticket_list' %}" class="menu-item {% if active_tab == 'tickets' %}active{% endif %}">
+          <span class="icon">🎫</span>
+          <span>Support Tickets</span>
+        </a>
+        <a href="{% url 'tickets:ticket_create' %}" class="menu-item {% if active_tab == 'new_ticket' %}active{% endif %}">
+          <span class="icon">➕</span>
+          <span>Create Ticket</span>
+        </a>
+
+        {% if user.is_staff or user.is_superuser %}
+        <div class="menu-label">Management</div>
+        <a href="{% url 'admin:index' %}" class="menu-item" target="_blank" rel="noopener">
+          <span class="icon">⚙️</span>
+          <span>Django Admin</span>
+        </a>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-footer">
+        {% if user.is_authenticated %}
+        <div class="user-snippet">
+          <div class="user-avatar">
+            {{ user.username|make_list|first|upper }}
+          </div>
+          <div class="user-meta">
+            <div class="user-name" title="{{ user.username }}">{{ user.get_full_name|default:user.username }}</div>
+            {% if user.is_superuser %}
+              <span class="user-role-badge admin">Administrator</span>
+            {% elif user.profile.is_agent %}
+              <span class="user-role-badge agent">Support Agent</span>
+            {% else %}
+              <span class="user-role-badge customer">Customer</span>
+            {% endif %}
+          </div>
+          <form method="post" action="{% url 'logout' %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm" title="Sign out" style="padding: 0.35rem 0.5rem; background: transparent; border-color: rgba(255,255,255,0.2); color: #cbd5e1;">
+              🚪
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Navigation Bar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Sidebar">
+            ☰
+          </button>
+          <h1 class="page-title">{% block page_heading %}Dashboard{% endblock %}</h1>
+        </div>
+
+        <div class="topbar-right">
+          {% block topbar_actions %}
+          <a href="{% url 'tickets:ticket_create' %}" class="btn btn-primary btn-sm">
+            <span>+ New Ticket</span>
+          </a>
+          {% endblock %}
+        </div>
+      </header>
+
+      <!-- Page Body -->
+      <div class="page-body">
+        <!-- Django Notification Alerts -->
+        {% if messages %}
+        <div class="messages-container">
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }}">
+            <span>{{ message }}</span>
+            <button type="button" class="alert-close" aria-label="Close notification">&times;</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

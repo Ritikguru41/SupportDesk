@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - SupportDesk</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-logo">
+          <div class="brand-icon">SD</div>
+          <span>SupportDesk</span>
+        </div>
+      </div>
+
+      <h2 class="auth-title">Welcome Back</h2>
+      <p class="auth-subtitle">Sign in to manage and track your support tickets</p>
+
+      {% if messages %}
+      <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+          <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if form.errors %}
+      <div class="alert alert-danger">
+        Invalid username or password. Please verify your credentials.
+      </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="id_username" class="form-label">Username</label>
+          <input type="text" name="username" id="id_username" class="form-control" placeholder="Enter your username" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label for="id_password" class="form-label">Password</label>
+          <input type="password" name="password" id="id_password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+          Sign In to Workspace
+        </button>
+      </form>
+
+      <div style="margin-top: 1.75rem; text-align: center; font-size: 0.875rem; color: var(--text-muted);">
+        Don't have an account yet? 
+        <a href="{% url 'tickets:register' %}" style="font-weight: 700;">Create an account</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tickets Directory - SupportDesk{% endblock %}
+{% block page_heading %}Support Tickets ({{ total_count }}){% endblock %}
+
+{% block content %}
+<!-- Search & Filter Controls -->
+<div class="toolbar-card">
+  <form method="get" action="{% url 'tickets:ticket_list' %}" class="filter-form">
+    <!-- Search Query -->
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search tickets by ID, title, keyword or customer...">
+    </div>
+
+    <!-- Status Filter -->
+    <select name="status" class="filter-select auto-filter">
+      <option value="">All Statuses</option>
+      {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>Status: {{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Priority Filter -->
+    <select name="priority" class="filter-select auto-filter">
+      <option value="">All Priorities</option>
+      {% for val, label in priority_choices %}
+        <option value="{{ val }}" {% if priority_filter == val %}selected{% endif %}>Priority: {{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Category Filter -->
+    <select name="category" class="filter-select auto-filter">
+      <option value="">All Categories</option>
+      {% for val, label in category_choices %}
+        <option value="{{ val }}" {% if category_filter == val %}selected{% endif %}>Category: {{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <!-- Agent Assignment Filter -->
+    {% if role in 'agent,admin' %}
+    <select name="assigned" class="filter-select auto-filter">
+      <option value="">All Assigned</option>
+      <option value="me" {% if assigned_filter == 'me' %}selected{% endif %}>Assigned to Me</option>
+      <option value="unassigned" {% if assigned_filter == 'unassigned' %}selected{% endif %}>Unassigned</option>
+    </select>
+    {% endif %}
+
+    <!-- Sort Order -->
+    <select name="sort" class="filter-select auto-filter">
+      <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
+      <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+      <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>Priority</option>
+      <option value="status" {% if sort_by == 'status' %}selected{% endif %}>Status</option>
+    </select>
+
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    {% if q or status_filter or priority_filter or category_filter or assigned_filter %}
+      <a href="{% url 'tickets:ticket_list' %}" class="btn btn-secondary btn-sm" title="Clear all filters">Reset</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Tickets Table Card -->
+<div class="card">
+  <div class="card-body" style="padding: 0;">
+    {% if page_obj %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Ticket ID</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Priority</th>
+            <th>Status</th>
+            {% if role != 'customer' %}<th>Customer</th>{% endif %}
+            <th>Assigned Agent</th>
+            <th>Created At</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ticket in page_obj %}
+          <tr>
+            <td>
+              <span class="ticket-code">{{ ticket.ticket_id }}</span>
+            </td>
+            <td>
+              <a href="{% url 'tickets:ticket_detail' ticket.ticket_id %}" class="ticket-title-link">
+                {{ ticket.title }}
+              </a>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                {{ ticket.description|truncatechars:65 }}
+              </div>
+            </td>
+            <td>
+              <span class="badge badge-category">{{ ticket.category }}</span>
+            </td>
+            <td>
+              <span class="badge badge-priority-{{ ticket.priority|lower }}">{{ ticket.priority }}</span>
+            </td>
+            <td>
+              <span class="badge badge-status-{{ ticket.status|slugify }}">{{ ticket.status }}</span>
+            </td>
+            {% if role != 'customer' %}
+            <td>
+              <span style="font-weight: 600;">{{ ticket.customer.username }}</span>
+            </td>
+            {% endif %}
+            <td>
+              {% if ticket.assigned_to %}
+                <span style="font-weight: 600;">{{ ticket.assigned_to.username }}</span>
+              {% else %}
+                <span style="color: var(--text-light); font-style: italic;">Unassigned</span>
+              {% endif %}
+            </td>
+            <td style="color: var(--text-muted); font-size: 0.85rem;">
+              {{ ticket.created_at|date:"M d, Y" }}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 0.35rem;">
+                <a href="{% url 'tickets:ticket_detail' ticket.ticket_id %}" class="btn btn-secondary btn-sm">
+                  View
+                </a>
+                <a href="{% url 'tickets:ticket_update' ticket.ticket_id %}" class="btn btn-secondary btn-sm">
+                  Edit
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+      <span style="font-size: 0.875rem; color: var(--text-muted);">
+        Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+      <div class="pagination-controls">
+        {% if page_obj.has_previous %}
+          <a href="?page=1{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="btn btn-secondary btn-sm">&laquo; First</a>
+          <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="btn btn-secondary btn-sm">Previous</a>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="btn btn-secondary btn-sm">Next</a>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}" class="btn btn-secondary btn-sm">Last &raquo;</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h4 class="empty-title">No matching tickets found</h4>
+      <p class="empty-subtitle">Try adjusting your search criteria, filters, or clearing active search terms.</p>
+      {% if q or status_filter or priority_filter or category_filter %}
+        <a href="{% url 'tickets:ticket_list' %}" class="btn btn-secondary">Clear All Filters</a>
+      {% else %}
+        <a href="{% url 'tickets:ticket_create' %}" class="btn btn-primary">+ Create New Ticket</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

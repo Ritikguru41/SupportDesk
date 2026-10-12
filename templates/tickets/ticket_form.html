@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+  {% if is_edit %}Edit Ticket {{ ticket.ticket_id }}{% else %}New Support Ticket{% endif %} - SupportDesk
+{% endblock %}
+
+{% block page_heading %}
+  {% if is_edit %}Edit Ticket: {{ ticket.ticket_id }}{% else %}Create New Support Ticket{% endif %}
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        {% if is_edit %}Update Ticket Details{% else %}Ticket Information{% endif %}
+      </h3>
+      <a href="{% if is_edit %}{% url 'tickets:ticket_detail' ticket.ticket_id %}{% else %}{% url 'tickets:ticket_list' %}{% endif %}" class="btn btn-secondary btn-sm">
+        &larr; Back
+      </a>
+    </div>
+
+    <div class="card-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="{{ form.title.id_for_label }}" class="form-label">Ticket Title *</label>
+          {{ form.title }}
+          {% if form.title.help_text %}<div class="form-help">{{ form.title.help_text }}</div>{% endif %}
+          {% if form.title.errors %}<div class="form-error">{{ form.title.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="{{ form.category.id_for_label }}" class="form-label">Category *</label>
+            {{ form.category }}
+            {% if form.category.errors %}<div class="form-error">{{ form.category.errors.0 }}</div>{% endif %}
+          </div>
+
+          <div class="form-group">
+            <label for="{{ form.priority.id_for_label }}" class="form-label">Priority *</label>
+            {{ form.priority }}
+            {% if form.priority.errors %}<div class="form-error">{{ form.priority.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+
+        {% if form.status %}
+        <div class="form-row">
+          <div class="form-group">
+            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="form-error">{{ form.status.errors.0 }}</div>{% endif %}
+          </div>
+
+          {% if form.assigned_to %}
+          <div class="form-group">
+            <label for="{{ form.assigned_to.id_for_label }}" class="form-label">Assign Agent</label>
+            {{ form.assigned_to }}
+            {% if form.assigned_to.errors %}<div class="form-error">{{ form.assigned_to.errors.0 }}</div>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="{{ form.description.id_for_label }}" class="form-label">Detailed Description *</label>
+          {{ form.description }}
+          {% if form.description.help_text %}<div class="form-help">{{ form.description.help_text }}</div>{% endif %}
+          {% if form.description.errors %}<div class="form-error">{{ form.description.errors.0 }}</div>{% endif %}
+        </div>
+
+        {% if form.resolution_notes %}
+        <div class="form-group">
+          <label for="{{ form.resolution_notes.id_for_label }}" class="form-label">Resolution Notes</label>
+          {{ form.resolution_notes }}
+          <div class="form-help">Document investigation, root cause, and steps taken to resolve the issue.</div>
+          {% if form.resolution_notes.errors %}<div class="form-error">{{ form.resolution_notes.errors.0 }}</div>{% endif %}
+        </div>
+        {% endif %}
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
+          <a href="{% if is_edit %}{% url 'tickets:ticket_detail' ticket.ticket_id %}{% else %}{% url 'tickets:ticket_list' %}{% endif %}" class="btn btn-secondary">
+            Cancel
+          </a>
+          <button type="submit" class="btn btn-primary">
+            {% if is_edit %}Save Changes{% else %}Submit Ticket{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
